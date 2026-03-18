@@ -75,7 +75,7 @@
         // --- Эффект Bloom (умеренный) ---
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.4, 0.3);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.5, 0.4);
         composer.addPass(bloomPass);
 
         // --- Управление камерой ---
