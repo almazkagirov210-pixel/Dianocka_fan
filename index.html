@@ -535,7 +535,7 @@
                 const tex = textures[i % textures.length];
                 const mat = new THREE.SpriteMaterial({ map: tex, depthTest: true, transparent: true });
                 const spr = new THREE.Sprite(mat);
-                spr.scale.set(25.0, 25.0, 1); // увеличен до 25
+                spr.scale.set(25.0, 40.0, 1); // увеличен до 25
                 spr.position.copy(pos.clone().multiplyScalar(1.2)); // уменьшен радиус (было 2.2)
                 spr.position.y += 2.8;
                 photoGroup.add(spr);
