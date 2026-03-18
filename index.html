@@ -1,604 +1,317 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Для Дианы ❤️ Звёздное сердце</title>
-    <style>
-        body { margin:0; overflow:hidden; background:black; font-family:'Segoe UI',sans-serif; }
-        #info {
-            position:absolute; top:20px; left:20px;
-            color:#ccd9ff; background:rgba(0,5,20,0.7);
-            padding:8px 20px; border-radius:30px;
-            backdrop-filter:blur(5px); border:1px solid #6688aa;
-            z-index:100; font-size:18px; pointer-events:none;
-            text-shadow:0 0 8px #88aaff;
-        }
-        #start-btn {
-            position:absolute; bottom:60px; left:50%; transform:translateX(-50%);
-            padding:15px 50px; font-size:24px; background:#1a2a3a;
-            border:2px solid #88aaff; border-radius:60px; color:white;
-            cursor:pointer; box-shadow:0 0 30px #88aaff; z-index:200;
-            transition:0.2s; font-weight:bold; letter-spacing:2px;
-            text-shadow:0 0 10px #aaccff;
-        }
-        #start-btn:hover { transform:translateX(-50%) scale(1.05); box-shadow:0 0 50px #aaccff; background:#2a3a4a; }
-        .music-btn {
-            position:fixed; top:20px; right:20px;
-            background:rgba(100,120,160,0.3); border:1px solid #88aaff;
-            border-radius:50px; width:44px; height:44px;
-            display:flex; align-items:center; justify-content:center;
-            font-size:22px; color:#ccd9ff; backdrop-filter:blur(4px);
-            cursor:pointer; z-index:1000; transition:0.3s;
-            box-shadow:0 0 15px #88aaff;
-        }
-        .music-btn:hover { background:#88aaff; color:#020210; transform:scale(1.1); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moon Love ❤️</title>
+
+<style>
+body { margin:0; overflow:hidden; background:black; }
+#start-btn {
+    position:absolute; bottom:40px; left:50%; transform:translateX(-50%);
+    padding:15px 40px; font-size:22px;
+    background:#1a2a3a; border:2px solid #88aaff;
+    color:white; border-radius:40px; cursor:pointer;
+    z-index:100;
+}
+</style>
 </head>
+
 <body>
-    <div id="info">✨ Звёздное небо ждёт...</div>
-    <button id="start-btn">Зажечь сердце</button>
-    <div class="music-btn" id="musicBtn">🔇</div>
+<button id="start-btn">Зажечь сердце</button>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/",
-                "tween": "https://unpkg.com/@tweenjs/tween.js@18.6.4/dist/tween.esm.js"
-            }
-        }
-    </script>
+<script type="importmap">
+{
+"imports": {
+"three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+"three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/",
+"tween": "https://unpkg.com/@tweenjs/tween.js@18.6.4/dist/tween.esm.js"
+}
+}
+</script>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import * as TWEEN from 'tween';
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import * as TWEEN from 'tween';
 
-        // --- Сцена и камера ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x020210);
+// сцена
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x020210);
 
-        const camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 2.8, 75); // чуть отодвинул, чтобы крупные фото влезали
-        camera.lookAt(0, 2.8, 0);
+// камера
+const camera = new THREE.PerspectiveCamera(80, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(0, 2.8, 80); // чуть дальше для крупных фото
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        document.body.appendChild(renderer.domElement);
+// рендер
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
 
-        // --- Управление камерой ---
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.5;
-        controls.enableZoom = true;
-        controls.enablePan = false;
-        controls.maxPolarAngle = Math.PI / 2;
-        controls.target.set(0, 2.8, 0);
+// BLOOM
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new UnrealBloomPass(
+    new THREE.Vector2(innerWidth, innerHeight),
+    1.4, 0.4, 0.85
+));
 
-        // --- Освещение ---
-        const ambient = new THREE.AmbientLight(0x203040);
-        scene.add(ambient);
-        const dirLight = new THREE.DirectionalLight(0xbfcfff, 1.2);
-        dirLight.position.set(2, 5, 10);
-        scene.add(dirLight);
-        const backLight = new THREE.PointLight(0x446688, 0.8);
-        backLight.position.set(-3, 2, 8);
-        scene.add(backLight);
-        const moonLight = new THREE.PointLight(0xeeddbb, 1.5, 30);
-        moonLight.position.set(2, 3, 10);
-        scene.add(moonLight);
+// управление
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.5;
+controls.target.set(0, 2.8, 0);
 
-        // --- Звёздный фон (8000) ---
-        const bgGeom = new THREE.BufferGeometry();
-        const bgCount = 8000;
-        const bgPos = new Float32Array(bgCount * 3);
-        const bgCol = new Float32Array(bgCount * 3);
-        for (let i = 0; i < bgCount; i++) {
-            const r = 60 + Math.random() * 80;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            bgPos[i*3] = r * Math.sin(phi) * Math.cos(theta);
-            bgPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-            bgPos[i*3+2] = r * Math.cos(phi);
-            const t = Math.random();
-            let color;
-            if (t < 0.6) color = new THREE.Color(0xffffff);
-            else if (t < 0.85) color = new THREE.Color(0xaaccff);
-            else color = new THREE.Color(0xffeedd);
-            bgCol[i*3] = color.r;
-            bgCol[i*3+1] = color.g;
-            bgCol[i*3+2] = color.b;
-        }
-        bgGeom.setAttribute('position', new THREE.BufferAttribute(bgPos, 3));
-        bgGeom.setAttribute('color', new THREE.BufferAttribute(bgCol, 3));
-        const bgMat = new THREE.PointsMaterial({ size: 0.3, vertexColors: true, blending: THREE.AdditiveBlending });
-        const starsBg = new THREE.Points(bgGeom, bgMat);
-        scene.add(starsBg);
+// свет
+scene.add(new THREE.AmbientLight(0x404040));
+const light = new THREE.PointLight(0xffffff, 1.5);
+light.position.set(5, 5, 5);
+scene.add(light);
 
-        // --- ТУМАННОСТИ (три спрайта) ---
-        function createNebulaTexture(color1, color2) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
-            gradient.addColorStop(0, color1);
-            gradient.addColorStop(0.5, color2);
-            gradient.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            return new THREE.CanvasTexture(canvas);
-        }
+// 🌕 ЛУНА с возможностью пульсации
+const moonGeom = new THREE.SphereGeometry(4.5, 128, 128);
+const moonTex = new THREE.TextureLoader().load('https://threejs.org/examples/textures/planets/moon_1024.jpg');
+const moonMat = new THREE.MeshPhongMaterial({
+    map: moonTex,
+    emissive: 0x111111,
+    emissiveIntensity: 0.1
+});
+const moon = new THREE.Mesh(moonGeom, moonMat);
+moon.position.set(0, 2.8, 0);
+moon.visible = false;
+scene.add(moon);
 
-        const nebula1 = new THREE.Sprite(
-            new THREE.SpriteMaterial({ 
-                map: createNebulaTexture('rgba(180, 100, 255, 0.25)', 'rgba(80, 0, 80, 0)'),
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                transparent: true
-            })
-        );
-        nebula1.scale.set(45, 45, 1);
-        nebula1.position.set(-20, 2, -30);
-        scene.add(nebula1);
+// пульсация луны как бьющееся сердце
+function startMoonPulsation() {
+    const beatScale = 1.3;
+    const normalScale = 1.0;
+    const beatDur = 200;
+    const releaseDur = 600;
+    const pause = 1500;
+    const colors = [0xffffff, 0x88aaff, 0xff88aa];
+    let colorIndex = 0;
 
-        const nebula2 = new THREE.Sprite(
-            new THREE.SpriteMaterial({ 
-                map: createNebulaTexture('rgba(100, 200, 255, 0.25)', 'rgba(0, 0, 80, 0)'),
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                transparent: true
-            })
-        );
-        nebula2.scale.set(45, 45, 1);
-        nebula2.position.set(22, 6, -35);
-        scene.add(nebula2);
-
-        const nebula3 = new THREE.Sprite(
-            new THREE.SpriteMaterial({ 
-                map: createNebulaTexture('rgba(255, 150, 200, 0.2)', 'rgba(80, 0, 40, 0)'),
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                transparent: true
-            })
-        );
-        nebula3.scale.set(50, 50, 1);
-        nebula3.position.set(5, -8, -40);
-        scene.add(nebula3);
-
-        // --- Основные частицы (80 000) ---
-        const PARTICLE_COUNT = 80000;
-        const geom = new THREE.BufferGeometry();
-        const startPos = new Float32Array(PARTICLE_COUNT * 3);
-        const colors = new Float32Array(PARTICLE_COUNT * 3);
-
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            const r = 4 + Math.random() * 18;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            startPos[i*3] = r * Math.sin(phi) * Math.cos(theta);
-            startPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-            startPos[i*3+2] = r * Math.cos(phi);
-            
-            const rand = Math.random();
-            let color;
-            if (rand < 0.5) color = new THREE.Color(0xffffff);
-            else if (rand < 0.75) color = new THREE.Color(0xfff5e6);
-            else if (rand < 0.9) color = new THREE.Color(0xcce5ff);
-            else color = new THREE.Color(0xffddbb);
-            colors[i*3] = color.r;
-            colors[i*3+1] = color.g;
-            colors[i*3+2] = color.b;
-        }
-        geom.setAttribute('position', new THREE.BufferAttribute(startPos, 3));
-        geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        
-        const partMat = new THREE.PointsMaterial({
-            size: 0.22,
-            vertexColors: true,
-            blending: THREE.AdditiveBlending,
-            sizeAttenuation: true
-        });
-        const particles = new THREE.Points(geom, partMat);
-        scene.add(particles);
-
-        // --- Позиции сердца (3D) ---
-        function getHeartPositions(count, scale = 0.7) {
-            const arr = [];
-            for (let i = 0; i < count; i++) {
-                const t = (i / count) * Math.PI * 2;
-                const x = 16 * Math.pow(Math.sin(t), 3);
-                const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-                const z = Math.sin(t * 2) * 4.5;
-                arr.push(new THREE.Vector3(x * scale, y * scale, z * scale));
-            }
-            return arr;
-        }
-        const heartTargets = getHeartPositions(PARTICLE_COUNT, 0.7);
-
-        // --- Параметры слов ---
-        const WORD_WIDTH = 100;
-        const WORD_HEIGHT = 50;
-        const WORD_DEPTH = 8;
-        const Y_OFFSET = 2.8;
-
-        function getWordPositions(text, count) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 2048;
-            canvas.height = 1024;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = 'Bold 400px "Segoe UI", "Arial", sans-serif';
-            ctx.fillStyle = '#fff';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, canvas.width/2, canvas.height/2);
-            
-            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-            const points = [];
-            const step = 2;
-            for (let y = 0; y < canvas.height; y += step) {
-                for (let x = 0; x < canvas.width; x += step) {
-                    const idx = (y * canvas.width + x) * 4;
-                    if (data[idx] > 128) {
-                        const px = (x / canvas.width - 0.5) * WORD_WIDTH;
-                        const py = (0.5 - y / canvas.height) * WORD_HEIGHT + Y_OFFSET;
-                        points.push(new THREE.Vector3(px, py, 0));
-                    }
-                }
-            }
-            
-            if (points.length === 0) { // fallback
-                for (let i = 0; i < count; i++) {
-                    const a = (i / count) * Math.PI * 2;
-                    points.push(new THREE.Vector3(Math.cos(a)*15, Math.sin(a)*8 + Y_OFFSET, 0));
-                }
-            }
-            
-            const result = [];
-            for (let i = 0; i < count; i++) {
-                const src = points[i % points.length];
-                const zVar = (Math.random() - 0.5) * WORD_DEPTH;
-                result.push(new THREE.Vector3(src.x, src.y, zVar));
-            }
-            return result;
-        }
-
-        // Четыре слова
-        const wordTargets = [
-            getWordPositions('DIANA', PARTICLE_COUNT),
-            getWordPositions('I LOVE YOU', PARTICLE_COUNT),
-            getWordPositions('DORA', PARTICLE_COUNT),
-            getWordPositions('ONE LOVE', PARTICLE_COUNT)
-        ];
-
-        // --- Луна с пульсацией "бьющееся сердце" ---
-        const moonGeom = new THREE.SphereGeometry(4.5, 128, 128);
-        const moonTex = new THREE.TextureLoader().load('https://threejs.org/examples/textures/planets/moon_1024.jpg');
-        const moonMat = new THREE.MeshPhongMaterial({
-            map: moonTex,
-            shininess: 5,
-            emissive: 0x111111,
-            emissiveIntensity: 0.1
-        });
-        const moon = new THREE.Mesh(moonGeom, moonMat);
-        moon.position.set(0, 2.8, 0);
-        moon.visible = false;
-        scene.add(moon);
-
-        // Пульсация в ритме сердца (быстрый удар, медленный спад, пауза)
-        function startHeartbeatPulsation() {
-            const beatScale = 1.3;       // максимальное увеличение
-            const normalScale = 1.0;
-            const beatDuration = 200;     // длительность удара (мс)
-            const releaseDuration = 600;   // длительность спада
-            const pauseDuration = 1500;    // пауза между ударами
-            const colors = [0xffffff, 0x88aaff, 0xff88aa];
-            let colorIndex = 0;
-
-            function beat() {
-                // Удар (быстрое увеличение)
+    function beat() {
+        // удар
+        new TWEEN.Tween(moon.scale)
+            .to({ x: beatScale, y: beatScale, z: beatScale }, beatDur)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .onComplete(() => {
+                // спад
                 new TWEEN.Tween(moon.scale)
-                    .to({ x: beatScale, y: beatScale, z: beatScale }, beatDuration)
-                    .easing(TWEEN.Easing.Quadratic.Out)
-                    .onComplete(() => {
-                        // Спад (медленное возвращение)
-                        new TWEEN.Tween(moon.scale)
-                            .to({ x: normalScale, y: normalScale, z: normalScale }, releaseDuration)
-                            .easing(TWEEN.Easing.Elastic.Out)
-                            .onComplete(() => {
-                                // Пауза, затем следующий удар
-                                setTimeout(() => {
-                                    colorIndex = (colorIndex + 1) % colors.length;
-                                    new TWEEN.Tween(moon.material.emissive)
-                                        .to(new THREE.Color(colors[colorIndex]), 300)
-                                        .start();
-                                    beat();
-                                }, pauseDuration);
-                            })
-                            .start();
-                    })
-                    .start();
-            }
-
-            // Запускаем первый удар после небольшой задержки
-            setTimeout(beat, 500);
-        }
-
-        // --- ТВОИ ФОТОГРАФИИ (локальные файлы) ---
-        const photoFiles = [
-            'photo_1.jpg',
-            'photo_2.jpg',
-            'photo_3.jpg',
-            'photo_4.jpg',
-            'photo_5.jpg',
-            'photo_6.jpg',
-            'photo_7.jpg',
-            'photo_8.jpg',
-            'photo_9.jpg',
-            'photo_10.jpg',
-            'photo_11.jpg',
-            'photo_12.jpg',
-            'photo_13.jpg'
-        ];
-
-        const photoGroup = new THREE.Group();
-        scene.add(photoGroup);
-        const loader = new THREE.TextureLoader();
-
-        // --- Состояния анимации ---
-        let wordIdx = 0;
-        const initialPosCopy = startPos.slice();
-
-        // --- Музыка ---
-        const audio = new Audio('do.mp3');
-        audio.loop = true;
-        audio.volume = 0.3;
-        const musicBtn = document.getElementById('musicBtn');
-        let musicPlaying = false;
-        musicBtn.addEventListener('click', () => {
-            if (musicPlaying) { audio.pause(); musicBtn.textContent = '🔇'; }
-            else { audio.play().catch(() => {}); musicBtn.textContent = '🎵'; }
-            musicPlaying = !musicPlaying;
-        });
-
-        // --- Старт анимации ---
-        document.getElementById('start-btn').addEventListener('click', () => {
-            document.getElementById('start-btn').style.display = 'none';
-            document.getElementById('info').innerText = '❤️ Сердце собирается...';
-            
-            const attr = particles.geometry.attributes.position;
-            const duration = 6000;
-            const startTime = Date.now();
-            
-            function toHeart() {
-                const now = Date.now();
-                const prog = Math.min((now - startTime) / duration, 1);
-                for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    const ix = i*3;
-                    attr.array[ix] = initialPosCopy[ix] * (1 - prog) + heartTargets[i].x * prog;
-                    attr.array[ix+1] = initialPosCopy[ix+1] * (1 - prog) + heartTargets[i].y * prog;
-                    attr.array[ix+2] = initialPosCopy[ix+2] * (1 - prog) + heartTargets[i].z * prog;
-                }
-                attr.needsUpdate = true;
-                if (prog < 1) requestAnimationFrame(toHeart);
-                else {
-                    document.getElementById('info').innerText = '✨ Сердце готово';
-                    setTimeout(() => startWords(), 2000);
-                }
-            }
-            toHeart();
-        });
-
-        function startWords() {
-            wordIdx = 0;
-            showWord(0);
-        }
-
-        function showWord(idx) {
-            if (idx >= wordTargets.length) {
-                explodeAndMoon();
-                return;
-            }
-            
-            const wordNames = ['DIANA', 'I LOVE YOU', 'DORA', 'ONE LOVE'];
-            document.getElementById('info').innerText = wordNames[idx];
-            
-            const attr = particles.geometry.attributes.position;
-            const current = attr.array.slice();
-            const scatter = [];
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                scatter.push(new THREE.Vector3(
-                    (Math.random() - 0.5) * 25,
-                    (Math.random() - 0.5) * 18,
-                    (Math.random() - 0.5) * 25
-                ));
-            }
-            
-            const scatterDur = 1500;
-            const scatterStart = Date.now();
-            
-            function doScatter() {
-                const now = Date.now();
-                const prog = Math.min((now - scatterStart) / scatterDur, 1);
-                for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    const ix = i*3;
-                    attr.array[ix] = current[ix] * (1 - prog) + scatter[i].x * prog;
-                    attr.array[ix+1] = current[ix+1] * (1 - prog) + scatter[i].y * prog;
-                    attr.array[ix+2] = current[ix+2] * (1 - prog) + scatter[i].z * prog;
-                }
-                attr.needsUpdate = true;
-                if (prog < 1) requestAnimationFrame(doScatter);
-                else {
-                    const target = wordTargets[idx];
-                    const startWord = attr.array.slice();
-                    const wordDur = 6000;
-                    const wordStart = Date.now();
-                    
-                    function toWord() {
-                        const now = Date.now();
-                        const prog = Math.min((now - wordStart) / wordDur, 1);
-                        for (let i = 0; i < PARTICLE_COUNT; i++) {
-                            const ix = i*3;
-                            attr.array[ix] = startWord[ix] * (1 - prog) + target[i].x * prog;
-                            attr.array[ix+1] = startWord[ix+1] * (1 - prog) + target[i].y * prog;
-                            attr.array[ix+2] = startWord[ix+2] * (1 - prog) + target[i].z * prog;
-                        }
-                        attr.needsUpdate = true;
-                        if (prog < 1) requestAnimationFrame(toWord);
-                        else {
-                            setTimeout(() => showWord(idx + 1), 2500);
-                        }
-                    }
-                    toWord();
-                }
-            }
-            doScatter();
-        }
-
-        function explodeAndMoon() {
-            document.getElementById('info').innerText = '💫 Луна и сердечко из фото';
-            
-            const attr = particles.geometry.attributes.position;
-            const current = attr.array.slice();
-            const explode = [];
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                explode.push(new THREE.Vector3(
-                    (Math.random() - 0.5) * 90,
-                    (Math.random() - 0.5) * 90,
-                    (Math.random() - 0.5) * 90
-                ));
-            }
-            const expDur = 2000;
-            const expStart = Date.now();
-            
-            function doExplode() {
-                const now = Date.now();
-                const prog = Math.min((now - expStart) / expDur, 1);
-                for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    const ix = i*3;
-                    attr.array[ix] = current[ix] * (1 - prog) + explode[i].x * prog;
-                    attr.array[ix+1] = current[ix+1] * (1 - prog) + explode[i].y * prog;
-                    attr.array[ix+2] = current[ix+2] * (1 - prog) + explode[i].z * prog;
-                }
-                attr.needsUpdate = true;
-                if (prog < 1) requestAnimationFrame(doExplode);
-                else {
-                    particles.visible = false;
-                    showMoonAndHeart();
-                }
-            }
-            doExplode();
-        }
-
-        // --- Асинхронная функция показа луны и сердечка из фото ---
-        async function showMoonAndHeart() {
-            document.getElementById('info').innerText = '🌕 Луна и наши моменты';
-            
-            moon.visible = true;
-            moon.scale.set(1,1,1); // сразу нормальный размер
-            // Запускаем пульсацию "бьющееся сердце"
-            startHeartbeatPulsation();
-
-            // --- Загружаем все фото как текстуры ---
-            console.log('Начинаем загрузку фото...');
-            const textures = [];
-            for (let file of photoFiles) {
-                try {
-                    const tex = await loader.loadAsync(file);
-                    textures.push(tex);
-                    console.log(`Загружено: ${file}`);
-                } catch (err) {
-                    console.warn(`Не удалось загрузить ${file}`, err);
-                }
-            }
-
-            if (textures.length === 0) {
-                console.error("Не удалось загрузить ни одной фотографии! Сердечко не появится.");
-                return;
-            }
-
-            console.log(`Загружено ${textures.length} фото. Создаём сердечко...`);
-
-            // --- Количество позиций ---
-            const photoCount = 60;
-            const heartPos = getHeartPositions(photoCount, 1.5);
-
-            while(photoGroup.children.length) photoGroup.remove(photoGroup.children[0]);
-
-            // --- ОГРОМНЫЕ ФОТОГРАФИИ (РАЗМЕР 25) С МАЛЕНЬКИМ РАДИУСОМ ---
-            heartPos.forEach((pos, i) => {
-                const tex = textures[i % textures.length];
-                const mat = new THREE.SpriteMaterial({ map: tex, depthTest: true, transparent: true });
-                const spr = new THREE.Sprite(mat);
-                spr.scale.set(140.0, 500.0, 1); // увеличен до 25
-                spr.position.copy(pos.clone().multiplyScalar(1.2)); // уменьшен радиус (было 2.2)
-                spr.position.y += 2.8;
-                photoGroup.add(spr);
-            });
-
-            console.log(`Создано ${photoGroup.children.length} спрайтов.`);
-
-            // --- Анимация появления спрайтов из центра ---
-            photoGroup.children.forEach((child, i) => {
-                child.scale.set(0,0,0);
-                const targetPos = child.position.clone();
-                child.position.set(0, 2.8, 0);
-                new TWEEN.Tween({ s:0, x:0, y:2.8, z:0 })
-                    .to({ s:1, x:targetPos.x, y:targetPos.y, z:targetPos.z }, 1500)
-                    .delay(i * 30)
+                    .to({ x: normalScale, y: normalScale, z: normalScale }, releaseDur)
                     .easing(TWEEN.Easing.Elastic.Out)
-                    .onUpdate(obj => {
-                        child.scale.set(obj.s, obj.s, 1);
-                        child.position.set(obj.x, obj.y, obj.z);
+                    .onComplete(() => {
+                        // пауза и смена цвета
+                        colorIndex = (colorIndex + 1) % colors.length;
+                        new TWEEN.Tween(moon.material.emissive)
+                            .to(new THREE.Color(colors[colorIndex]), 300)
+                            .start();
+                        setTimeout(beat, pause);
                     })
                     .start();
-            });
+            })
+            .start();
+    }
+    setTimeout(beat, 500);
+}
+
+// ⭐ звезды (более реалистичные)
+const starsGeom = new THREE.BufferGeometry();
+const starCount = 5000;
+const pos = new Float32Array(starCount*3);
+const colors = new Float32Array(starCount*3);
+
+for(let i=0;i<starCount;i++){
+    // распределение в сфере
+    const r = 80 + Math.random() * 50;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+    pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i*3+2] = r * Math.cos(phi);
+
+    // случайный цвет (белый, голубой, желтоватый)
+    const t = Math.random();
+    if (t < 0.6) colors[i*3] = colors[i*3+1] = colors[i*3+2] = 1; // белый
+    else if (t < 0.85) {
+        colors[i*3] = 0.7; colors[i*3+1] = 0.8; colors[i*3+2] = 1; // голубой
+    } else {
+        colors[i*3] = 1; colors[i*3+1] = 0.9; colors[i*3+2] = 0.7; // желтоватый
+    }
+}
+
+starsGeom.setAttribute('position', new THREE.BufferAttribute(pos,3));
+starsGeom.setAttribute('color', new THREE.BufferAttribute(colors,3));
+
+const stars = new THREE.Points(
+    starsGeom,
+    new THREE.PointsMaterial({ size: 0.4, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending })
+);
+scene.add(stars);
+
+// 🌫️ ТУМАННОСТИ (две цветные)
+function createNebula(color1, color2) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+    grad.addColorStop(0, color1);
+    grad.addColorStop(0.5, color2);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    return new THREE.CanvasTexture(canvas);
+}
+
+const nebula1 = new THREE.Sprite(
+    new THREE.SpriteMaterial({ 
+        map: createNebula('rgba(180, 100, 255, 0.2)', 'rgba(80,0,80,0)'),
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        transparent: true
+    })
+);
+nebula1.scale.set(40, 40, 1);
+nebula1.position.set(-20, 2, -30);
+scene.add(nebula1);
+
+const nebula2 = new THREE.Sprite(
+    new THREE.SpriteMaterial({ 
+        map: createNebula('rgba(100, 200, 255, 0.2)', 'rgba(0,0,80,0)'),
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        transparent: true
+    })
+);
+nebula2.scale.set(40, 40, 1);
+nebula2.position.set(20, 5, -35);
+scene.add(nebula2);
+
+// ❤️ сердце позиции (3D с небольшим Z)
+function getHeart(count, scale=1){
+    const arr=[];
+    for(let i=0;i<count;i++){
+        const t = (i/count)*Math.PI*2;
+        const x = 16 * Math.pow(Math.sin(t),3) * scale;
+        const y = (13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)) * scale;
+        const z = Math.sin(t * 2) * 2; // небольшая глубина
+        arr.push(new THREE.Vector3(x, y, z));
+    }
+    return arr;
+}
+
+// 📸 ФОТОГРАФИИ (имена файлов)
+const files = [
+    'photo_1.jpg','photo_2.jpg','photo_3.jpg','photo_4.jpg',
+    'photo_5.jpg','photo_6.jpg','photo_7.jpg','photo_8.jpg',
+    'photo_9.jpg','photo_10.jpg','photo_11.jpg','photo_12.jpg','photo_13.jpg'
+];
+
+const group = new THREE.Group();
+scene.add(group);
+
+async function show(){
+    document.getElementById('start-btn').style.display = 'none';
+    moon.visible = true;
+    startMoonPulsation();
+
+    const loader = new THREE.TextureLoader();
+    const textures=[];
+
+    for(let f of files){
+        try{
+            textures.push(await loader.loadAsync(f));
+        }catch(e){
+            console.log("нет файла",f);
         }
+    }
 
-        // --- Анимация туманностей (плавное движение) ---
-        function animateNebulas() {
-            const time = Date.now() * 0.0005;
-            nebula1.position.x = -20 + Math.sin(time) * 5;
-            nebula1.position.y = 2 + Math.cos(time * 0.6) * 4;
-            nebula1.material.opacity = 0.5 + Math.sin(time) * 0.3;
+    if(textures.length===0) return;
 
-            nebula2.position.x = 22 + Math.cos(time * 0.7) * 6;
-            nebula2.position.y = 6 + Math.sin(time * 0.5) * 5;
-            nebula2.material.opacity = 0.5 + Math.cos(time * 0.4) * 0.3;
+    // генерируем позиции сердца (60 штук для плотности)
+    const heart = getHeart(60, 1.5);
 
-            nebula3.position.x = 5 + Math.sin(time * 0.8) * 7;
-            nebula3.position.y = -8 + Math.cos(time * 0.3) * 6;
-            nebula3.material.opacity = 0.4 + Math.sin(time * 0.6) * 0.3;
-        }
+    // очищаем группу
+    while(group.children.length) group.remove(group.children[0]);
 
-        // --- Анимационный цикл ---
-        function animate() {
-            requestAnimationFrame(animate);
+    heart.forEach((p,i)=>{
+        const tex = textures[i % textures.length];
+        const spr = new THREE.Sprite(
+            new THREE.SpriteMaterial({
+                map: tex,
+                blending: THREE.AdditiveBlending, // можно сменить на NormalBlending для естественных цветов
+                transparent: true,
+                depthWrite: false
+            })
+        );
 
-            if (moon.visible) {
-                moon.rotation.y += 0.0005;
-                moon.rotation.x += 0.0002;
-            }
+        // РАЗМЕР ФОТО: сейчас 25, можно менять
+        spr.scale.set(25, 25, 1);
+        // РАДИУС КОНТУРА: множитель 1.2 (чем больше, тем дальше от центра)
+        spr.position.copy(p.clone().multiplyScalar(1.2));
+        spr.position.y += 2.8; // поднимаем до уровня луны
 
-            animateNebulas();
+        group.add(spr);
 
-            TWEEN.update();
-            starsBg.rotation.y += 0.00015;
-            controls.update();
-            renderer.render(scene, camera);
-        }
-        animate();
+        // анимация появления (из центра)
+        spr.scale.set(0,0,0);
+        new TWEEN.Tween({s:0})
+            .to({s:1}, 1500)
+            .delay(i*30)
+            .onUpdate(v=>spr.scale.set(v.s, v.s, 1))
+            .start();
+    });
+}
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
+document.getElementById('start-btn').onclick = show;
+
+// анимация туманностей
+function animateNebulas() {
+    const time = Date.now() * 0.0005;
+    nebula1.position.x = -20 + Math.sin(time) * 5;
+    nebula1.position.y = 2 + Math.cos(time*0.6) * 4;
+    nebula1.material.opacity = 0.5 + Math.sin(time) * 0.3;
+
+    nebula2.position.x = 20 + Math.cos(time*0.7) * 6;
+    nebula2.position.y = 5 + Math.sin(time*0.5) * 5;
+    nebula2.material.opacity = 0.5 + Math.cos(time*0.4) * 0.3;
+}
+
+// анимация
+function animate(){
+    requestAnimationFrame(animate);
+
+    if (moon.visible) {
+        moon.rotation.y += 0.001;
+    }
+
+    // вращение сердца
+    group.rotation.y += 0.003;
+
+    // звезды
+    stars.rotation.x += 0.0001;
+    stars.rotation.y += 0.0002;
+
+    // туманности
+    animateNebulas();
+
+    TWEEN.update();
+    controls.update();
+    composer.render();
+}
+animate();
+
+onresize=()=>{
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+    composer.setSize(innerWidth, innerHeight);
+};
+</script>
 </body>
 </html>
