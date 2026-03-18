@@ -60,7 +60,7 @@
         scene.background = new THREE.Color(0x020210);
 
         const camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 2.8, 65);
+        camera.position.set(0, 2.8, 75); // чуть отодвинул, чтобы крупные фото влезали
         camera.lookAt(0, 2.8, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -524,19 +524,19 @@
 
             console.log(`Загружено ${textures.length} фото. Создаём сердечко...`);
 
-            // --- УВЕЛИЧИВАЕМ РАЗМЕР ФОТО, УМЕНЬШАЕМ КОЛИЧЕСТВО ---
-            const photoCount = 60; // количество позиций
+            // --- Количество позиций ---
+            const photoCount = 60;
             const heartPos = getHeartPositions(photoCount, 1.5);
 
             while(photoGroup.children.length) photoGroup.remove(photoGroup.children[0]);
 
-            // --- ОЧЕНЬ КРУПНЫЕ ФОТОГРАФИИ (РАЗМЕР 10) ---
+            // --- ОГРОМНЫЕ ФОТОГРАФИИ (РАЗМЕР 25) С МАЛЕНЬКИМ РАДИУСОМ ---
             heartPos.forEach((pos, i) => {
                 const tex = textures[i % textures.length];
                 const mat = new THREE.SpriteMaterial({ map: tex, depthTest: true, transparent: true });
                 const spr = new THREE.Sprite(mat);
-                spr.scale.set(10.0, 10.0, 1); // увеличен до 10
-                spr.position.copy(pos.clone().multiplyScalar(2.2)); // радиус контура
+                spr.scale.set(25.0, 25.0, 1); // увеличен до 25
+                spr.position.copy(pos.clone().multiplyScalar(1.2)); // уменьшен радиус (было 2.2)
                 spr.position.y += 2.8;
                 photoGroup.add(spr);
             });
