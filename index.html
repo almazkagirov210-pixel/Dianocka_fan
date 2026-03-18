@@ -118,7 +118,7 @@
         const starsBg = new THREE.Points(bgGeom, bgMat);
         scene.add(starsBg);
 
-        // --- ТУМАННОСТИ (два спрайта) ---
+        // --- ТУМАННОСТИ (три спрайта) ---
         function createNebulaTexture(color1, color2) {
             const canvas = document.createElement('canvas');
             canvas.width = 512;
@@ -135,27 +135,39 @@
 
         const nebula1 = new THREE.Sprite(
             new THREE.SpriteMaterial({ 
-                map: createNebulaTexture('rgba(180, 100, 255, 0.2)', 'rgba(80, 0, 80, 0)'),
+                map: createNebulaTexture('rgba(180, 100, 255, 0.25)', 'rgba(80, 0, 80, 0)'),
                 blending: THREE.AdditiveBlending,
                 depthWrite: false,
                 transparent: true
             })
         );
-        nebula1.scale.set(35, 35, 1);
-        nebula1.position.set(-18, 0, -25);
+        nebula1.scale.set(45, 45, 1);
+        nebula1.position.set(-20, 2, -30);
         scene.add(nebula1);
 
         const nebula2 = new THREE.Sprite(
             new THREE.SpriteMaterial({ 
-                map: createNebulaTexture('rgba(100, 200, 255, 0.2)', 'rgba(0, 0, 80, 0)'),
+                map: createNebulaTexture('rgba(100, 200, 255, 0.25)', 'rgba(0, 0, 80, 0)'),
                 blending: THREE.AdditiveBlending,
                 depthWrite: false,
                 transparent: true
             })
         );
-        nebula2.scale.set(35, 35, 1);
-        nebula2.position.set(18, 5, -30);
+        nebula2.scale.set(45, 45, 1);
+        nebula2.position.set(22, 6, -35);
         scene.add(nebula2);
+
+        const nebula3 = new THREE.Sprite(
+            new THREE.SpriteMaterial({ 
+                map: createNebulaTexture('rgba(255, 150, 200, 0.2)', 'rgba(80, 0, 40, 0)'),
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                transparent: true
+            })
+        );
+        nebula3.scale.set(50, 50, 1);
+        nebula3.position.set(5, -8, -40);
+        scene.add(nebula3);
 
         // --- Основные частицы (80 000) ---
         const PARTICLE_COUNT = 80000;
@@ -264,7 +276,7 @@
             getWordPositions('ONE LOVE', PARTICLE_COUNT)
         ];
 
-        // --- Луна (с поддержкой пульсации) ---
+        // --- Луна с пульсацией "бьющееся сердце" ---
         const moonGeom = new THREE.SphereGeometry(4.5, 128, 128);
         const moonTex = new THREE.TextureLoader().load('https://threejs.org/examples/textures/planets/moon_1024.jpg');
         const moonMat = new THREE.MeshPhongMaterial({
@@ -278,29 +290,43 @@
         moon.visible = false;
         scene.add(moon);
 
-        // Функция пульсации луны (цикл белый-синий-розовый)
-        function startMoonPulsation() {
+        // Пульсация в ритме сердца (быстрый удар, медленный спад, пауза)
+        function startHeartbeatPulsation() {
+            const beatScale = 1.3;       // максимальное увеличение
+            const normalScale = 1.0;
+            const beatDuration = 200;     // длительность удара (мс)
+            const releaseDuration = 600;   // длительность спада
+            const pauseDuration = 1500;    // пауза между ударами
             const colors = [0xffffff, 0x88aaff, 0xff88aa];
             let colorIndex = 0;
-            setInterval(() => {
-                colorIndex = (colorIndex + 1) % colors.length;
-                // Пульсация масштаба
+
+            function beat() {
+                // Удар (быстрое увеличение)
                 new TWEEN.Tween(moon.scale)
-                    .to({ x: 1.2, y: 1.2, z: 1.2 }, 800)
-                    .easing(TWEEN.Easing.Elastic.Out)
+                    .to({ x: beatScale, y: beatScale, z: beatScale }, beatDuration)
+                    .easing(TWEEN.Easing.Quadratic.Out)
                     .onComplete(() => {
+                        // Спад (медленное возвращение)
                         new TWEEN.Tween(moon.scale)
-                            .to({ x: 1, y: 1, z: 1 }, 800)
-                            .easing(TWEEN.Easing.Elastic.In)
+                            .to({ x: normalScale, y: normalScale, z: normalScale }, releaseDuration)
+                            .easing(TWEEN.Easing.Elastic.Out)
+                            .onComplete(() => {
+                                // Пауза, затем следующий удар
+                                setTimeout(() => {
+                                    colorIndex = (colorIndex + 1) % colors.length;
+                                    new TWEEN.Tween(moon.material.emissive)
+                                        .to(new THREE.Color(colors[colorIndex]), 300)
+                                        .start();
+                                    beat();
+                                }, pauseDuration);
+                            })
                             .start();
                     })
                     .start();
-                // Смена цвета свечения
-                new TWEEN.Tween(moon.material.emissive)
-                    .to(new THREE.Color(colors[colorIndex]), 800)
-                    .easing(TWEEN.Easing.Quadratic.InOut)
-                    .start();
-            }, 3000);
+            }
+
+            // Запускаем первый удар после небольшой задержки
+            setTimeout(beat, 500);
         }
 
         // --- ТВОИ ФОТОГРАФИИ (локальные файлы) ---
@@ -474,14 +500,9 @@
             document.getElementById('info').innerText = '🌕 Луна и наши моменты';
             
             moon.visible = true;
-            moon.scale.set(0,0,0);
-            new TWEEN.Tween({ s: 0 }).to({ s: 1 }, 2000)
-                .easing(TWEEN.Easing.Elastic.Out)
-                .onUpdate(obj => moon.scale.set(obj.s, obj.s, obj.s))
-                .start();
-
-            // Запускаем пульсацию луны
-            startMoonPulsation();
+            moon.scale.set(1,1,1); // сразу нормальный размер
+            // Запускаем пульсацию "бьющееся сердце"
+            startHeartbeatPulsation();
 
             // --- Загружаем все фото как текстуры ---
             console.log('Начинаем загрузку фото...');
@@ -503,19 +524,19 @@
 
             console.log(`Загружено ${textures.length} фото. Создаём сердечко...`);
 
-            // --- УМЕНЬШАЕМ КОЛИЧЕСТВО ПОЗИЦИЙ, УВЕЛИЧИВАЕМ РАЗМЕР ФОТО ---
-            const photoCount = 80; // было 120
+            // --- УВЕЛИЧИВАЕМ РАЗМЕР ФОТО, УМЕНЬШАЕМ КОЛИЧЕСТВО ---
+            const photoCount = 60; // количество позиций
             const heartPos = getHeartPositions(photoCount, 1.5);
 
             while(photoGroup.children.length) photoGroup.remove(photoGroup.children[0]);
 
-            // --- УВЕЛИЧЕННЫЙ РАЗМЕР СПРАЙТОВ И РАДИУС ---
+            // --- ОЧЕНЬ КРУПНЫЕ ФОТОГРАФИИ (РАЗМЕР 10) ---
             heartPos.forEach((pos, i) => {
                 const tex = textures[i % textures.length];
                 const mat = new THREE.SpriteMaterial({ map: tex, depthTest: true, transparent: true });
                 const spr = new THREE.Sprite(mat);
-                spr.scale.set(6.0, 6.0, 1); // было 4.5
-                spr.position.copy(pos.clone().multiplyScalar(2.0)); // было 1.9
+                spr.scale.set(10.0, 10.0, 1); // увеличен до 10
+                spr.position.copy(pos.clone().multiplyScalar(2.2)); // радиус контура
                 spr.position.y += 2.8;
                 photoGroup.add(spr);
             });
@@ -542,13 +563,17 @@
         // --- Анимация туманностей (плавное движение) ---
         function animateNebulas() {
             const time = Date.now() * 0.0005;
-            nebula1.position.x = -18 + Math.sin(time) * 4;
-            nebula1.position.y = 0 + Math.cos(time * 0.7) * 3;
+            nebula1.position.x = -20 + Math.sin(time) * 5;
+            nebula1.position.y = 2 + Math.cos(time * 0.6) * 4;
             nebula1.material.opacity = 0.5 + Math.sin(time) * 0.3;
 
-            nebula2.position.x = 18 + Math.cos(time * 0.8) * 5;
-            nebula2.position.y = 5 + Math.sin(time * 0.6) * 4;
-            nebula2.material.opacity = 0.5 + Math.cos(time * 0.5) * 0.3;
+            nebula2.position.x = 22 + Math.cos(time * 0.7) * 6;
+            nebula2.position.y = 6 + Math.sin(time * 0.5) * 5;
+            nebula2.material.opacity = 0.5 + Math.cos(time * 0.4) * 0.3;
+
+            nebula3.position.x = 5 + Math.sin(time * 0.8) * 7;
+            nebula3.position.y = -8 + Math.cos(time * 0.3) * 6;
+            nebula3.material.opacity = 0.4 + Math.sin(time * 0.6) * 0.3;
         }
 
         // --- Анимационный цикл ---
